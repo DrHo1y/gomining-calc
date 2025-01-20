@@ -3,7 +3,7 @@ const path = require('path')
 
 const app = express()
 
-const getData = require('./api')
+const getData = require('./src/api')
 
 app.use(express.json({ extended: true }))
 app.use(express.urlencoded({ extended: true }))
