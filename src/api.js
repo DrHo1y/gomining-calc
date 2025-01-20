@@ -93,8 +93,11 @@ function setPowerCost() {
 }
 async function getBtcPrice() {
     try {
+        var time = Date.now()
         if (cache.has('btc-cost')) {
             const cacheData = cache.get(`btc-cost`)
+            time = Date.now() - time
+            console.log('cache btc cost -- ' + time/1000) 
             return cacheData
         }
         const btc = await axios({
@@ -102,12 +105,16 @@ async function getBtcPrice() {
             url: 'https://www.coinwarz.com/mining/bitcoin/calculator',
             headers: {
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'Cookie': '_ga=GA1.1.2143701187.1737267663; ASP.NET_SessionId=t2ixvifbjyfuhvsyo5cdbqh4; _ga_RXVWB6WQ9C=GS1.1.1737385499.4.1.1737385503.0.0.0',
+                'Priority': 'u=0,i'
             }
         })
         const dom1 = new jsdom.JSDOM(btc.data)
         const btcCost = dom1.window.document.querySelector('#coin-menu > div > div.asset-container > div.col2 > div > div.asset-price > span.price-amt').textContent.trim().replace('$', '')
         cache.set('btc-cost', btcCost, 120)
+        time = Date.now() - time
+        console.log('btc cost -- ' + time/1000) 
         return btcCost
     } catch (e) {
         return null
@@ -115,8 +122,11 @@ async function getBtcPrice() {
 }
 async function getUSDTRub() {
     try {
+        var time = Date.now()
         if (cache.has('usdt-cost')) {
             const cacheData = cache.get(`usdt-cost`)
+            time = Date.now() - time
+            console.log('usdt cost cache -- ' + time/1000) 
             return cacheData
         }
         const req = await axios({
@@ -124,7 +134,9 @@ async function getUSDTRub() {
             url: 'https://www.bybit.com/en/convert/usdt-to-rub/',
             headers: {
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'Cookie': '_ga=GA1.1.2143701187.1737267663; ASP.NET_SessionId=t2ixvifbjyfuhvsyo5cdbqh4; _ga_RXVWB6WQ9C=GS1.1.1737385499.4.1.1737385503.0.0.0',
+                'Priority': 'u=0,i'
             }
         })
         const dom1 = new jsdom.JSDOM(req.data)
@@ -134,6 +146,8 @@ async function getUSDTRub() {
             .trim()
             .replace('₽', '')
         cache.set('usdt-cost', Number(res) + 2.2, 120)
+        time = Date.now() - time
+        console.log('usdt cost -- ' + time/1000) 
         return Number(res) + 2.2
     } catch (e) {
         return 105
@@ -144,9 +158,12 @@ async function getUSDTRub() {
 
 async function getThReward(pow, eff, cost, usdcurs, num, quan) {
     try {
+        var time = Date.now()
         if (cache.has(`req-${num}`)) {
             const cacheData = cache.get(`req-${num}`)
             if (cacheData.pow == pow && cacheData.eff == eff && cacheData.quan == quan) {
+                time = Date.now() - time
+                console.log('get th reward cache -- ' + time/1000)
                 return cacheData.payload
             }
         }
@@ -158,7 +175,9 @@ async function getThReward(pow, eff, cost, usdcurs, num, quan) {
             url: 'https://www.coinwarz.com/mining/bitcoin/calculator',
             headers: {
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'Cookie': '_ga=GA1.1.2143701187.1737267663; ASP.NET_SessionId=t2ixvifbjyfuhvsyo5cdbqh4; _ga_RXVWB6WQ9C=GS1.1.1737385499.4.1.1737385503.0.0.0',
+                'Priority': 'u=0,i'
             },
             params: {
                 h: pow,
@@ -202,6 +221,8 @@ async function getThReward(pow, eff, cost, usdcurs, num, quan) {
             payload: arr
         }
         cache.set(`req-${num}`, data, 120)
+        time = Date.now() - time
+        console.log('get th reward -- ' + time/1000)
         return arr
     } catch (e) {
         console.log(e)
@@ -209,6 +230,7 @@ async function getThReward(pow, eff, cost, usdcurs, num, quan) {
     }
 }
 function caclUpgrade(obj, usdcurs) {
+    var time = Date.now()
     const power = setPowerCost()
     const effect = setEffectPrice()
     const res = []
@@ -259,16 +281,25 @@ function caclUpgrade(obj, usdcurs) {
             sum[el] = Number(sum[el])
         }
     }
+    time = Date.now() - time
+    console.log('calc upgrade -- ' + time/1000)
     return sum
 }
 async function calcReward(obj, usdcurs) {
+    var time = Date.now()
     var costKiloWattHours = 31.87 / (1024 * 20 * 24) * 1000
     var costKiloWattHoursDisc = 25.13 / (1024 * 20 * 24) * 1000
     const objmas = ['hour', 'day', 'week', 'month', 'year']
     const resMas = []
     for (let i = 0; i < obj.length; i++) {
         const reward1 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHours, usdcurs, 1, obj[i].quan)
+        time = Date.now() - time
+        console.log('calc reward1 -- ' + time/1000)
+        time = Date.now()
         const reward2 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHoursDisc, usdcurs, 2, obj[i].quan)
+        time = Date.now() - time
+        console.log('calc reward2 -- ' + time/1000)
+        time = Date.now()
         const res = {
             hour: {},
             day: {},
@@ -322,14 +353,19 @@ async function calcReward(obj, usdcurs) {
             }
         }
     }
+    time = Date.now() - time
+    console.log('calc return sum -- ' + time/1000)
     return sum
 }
 async function getData(obj) {
     try {
+        var time = Date.now()
         const usdcurs = await getUSDTRub()
         const btcCost = await getBtcPrice()
         const calc = caclUpgrade(obj, usdcurs)
         const reward = await calcReward(obj, usdcurs)
+        time = Date.now() - time
+        console.log('get data -- ' + time/1000)
         return {
             rubusd: format(usdcurs),
             BTCprice: format(toNum(btcCost) * usdcurs),
