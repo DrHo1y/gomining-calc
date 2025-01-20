@@ -142,11 +142,11 @@ async function getUSDTRub() {
 
 
 
-async function getThReward(pow, eff, cost, usdcurs, num) {
+async function getThReward(pow, eff, cost, usdcurs, num, quan) {
     try {
         if (cache.has(`req-${num}`)) {
             const cacheData = cache.get(`req-${num}`)
-            if (cacheData.pow == pow && cacheData.eff == eff) {
+            if (cacheData.pow == pow && cacheData.eff == eff && cacheData.quan == quan) {
                 return cacheData.payload
             }
         }
@@ -184,11 +184,11 @@ async function getThReward(pow, eff, cost, usdcurs, num) {
         for (let i = 0; i < valueArr.length; i++) {
             if (valueArr[i] == 'Hourly' || valueArr[i] == 'Daily' || valueArr[i] == 'Weekly' || valueArr[i] == 'Monthly' || valueArr[i] == 'Annually') {
                 arr.push({
-                    rewardBTC: toNum(valueArr[i + 1].replace('$', '')),
-                    reward: toNum(valueArr[i + 2].replace('$', '')) * usdcurs,
-                    service: toNum(valueArr[i + 3].replace('$', '')) * usdcurs,
+                    rewardBTC: toNum(valueArr[i + 1].replace('$', '')) * quan,
+                    reward: toNum(valueArr[i + 2].replace('$', '')) * usdcurs * quan,
+                    service: toNum(valueArr[i + 3].replace('$', '')) * usdcurs * quan,
                     //poolFees: toNum(valueArr[i+4].replace('$', '')) * usdcurs,
-                    profit: toNum(valueArr[i + 5].replace('$', '')) * usdcurs
+                    profit: toNum(valueArr[i + 5].replace('$', '')) * usdcurs * quan
                 })
             }
         }
@@ -196,6 +196,7 @@ async function getThReward(pow, eff, cost, usdcurs, num) {
         const data = {
             pow,
             eff,
+            quan,
             cost,
             usdcurs,
             payload: arr
@@ -235,7 +236,7 @@ function caclUpgrade(obj, usdcurs) {
             newPow: obj[i].newPow,
             curEff: obj[i].eff,
             newEff: obj[i].newEff,
-            costUpgrade: fullcost
+            costUpgrade: fullcost * obj[i].quan
         })
     }
     const sum = {
@@ -266,8 +267,8 @@ async function calcReward(obj, usdcurs) {
     const objmas = ['hour', 'day', 'week', 'month', 'year']
     const resMas = []
     for (let i = 0; i < obj.length; i++) {
-        const reward1 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHours, usdcurs, 1)
-        const reward2 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHoursDisc, usdcurs, 2)
+        const reward1 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHours, usdcurs, 1, obj[i].quan)
+        const reward2 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHoursDisc, usdcurs, 2, obj[i].quan)
         const res = {
             hour: {},
             day: {},

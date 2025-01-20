@@ -5,6 +5,10 @@ function removeChild(id) {
         tag.removeChild(child[i])
     }
 }
+function selfRemove(id) {
+    var tag = document.getElementById(id)
+    tag.remove()
+}
 function appendChild(obj) {
     var root = document.getElementById(obj[0])
     var tag = document.createElement(obj[1])
@@ -46,32 +50,41 @@ function addMinerForm() {
     const newPow = 'newPow-' + String(index)
     const eff = 'eff-' + String(index)
     const newEff = 'newEff-' + String(index)
+    const quan = 'quan-' + String(index)
     const row = document.createElement('div')
     row.className = 'row align-items-start'
+    row.id = `row-${index}`
     row.style = 'padding-top: 50px;'
     row.innerHTML = `
     <div class="col-3">
         <div class="mb-3">
             <label for="pow" class="form-label">Текущая производительность TH</label>
-            <input type="number" class="form-control" id="${pow}" value="2">
+            <input type="number" class="form-control" id="${pow}" value="0" min="0" max="5000">
         </div>
+        <button class="btn btn-primary"
+            style="background-color: var(--bs-danger); border-color: var(--bs-danger-border-subtle);"
+            onclick="selfRemove('row-${index}')">Удалить</button>
     </div>
     <div class="col-3">
         <div class="mb-3">
             <label for="newPow" class="form-label">Желаемая производительность TH</label>
-            <input type="number" class="form-control" id="${newPow}" value="2000">
+            <input type="number" class="form-control" id="${newPow}" value="5000" min="0" max="5000">
+        </div>
+        <div class="mb-3">
+            <label for="newPow" class="form-label">Введите количество экземпляров майнеров</label>
+            <input type="number" class="form-control" id="${quan}" value="1" min="1">
         </div>
     </div>
     <div class="col-3">
         <div class="mb-3">
             <label for="eff" class="form-label">Текущая энергоэффективность W/TH</label>
-            <input type="number" class="form-control" id="${eff}" value="20">
+            <input type="number" class="form-control" id="${eff}" value="20" min="0" max="20">
         </div>
     </div>
     <div class="col-3">
         <div class="mb-3">
             <label for="newEff" class="form-label">Желаемая энергоэффективность W/TH</label>
-            <input type="number" class="form-control" id="${newEff}" value="20">
+            <input type="number" class="form-control" id="${newEff}" value="20" min="50" max="20">
         </div>
     </div>
     `
@@ -92,10 +105,10 @@ async function getData() {
     var btc = document.getElementById('btc')
     var upgrade = document.getElementById('upgrade')
     const data = []
-    const elems = ['pow', 'newPow', 'eff', 'newEff']
+    const elems = ['pow', 'newPow', 'eff', 'newEff', 'quan']
     var flag = true
     var num = 0
-    while (flag)  {
+    while (flag) {
         var check = document.getElementById(elems[0] + `-${num}`)
         if (!check) {
             flag = false
@@ -108,16 +121,12 @@ async function getData() {
             newEff: 0
         }
         for (let i = 0; i < elems.length; i++) {
-            const el = document.getElementById(elems[i] +  `-${num}`)
+            const el = document.getElementById(elems[i] + `-${num}`)
             calc[elems[i]] = el.value
         }
         data.push(calc)
         num += 1
-    } 
-    // let pow = document.getElementById('pow-0').value
-    // let newPow = document.getElementById('newPow-0').value
-    // let eff = document.getElementById('eff-0').value
-    // let newEff = document.getElementById('newEff-0').value
+    }
     let url = `/calc`
     var req = await fetch(url, {
         method: 'POST',
