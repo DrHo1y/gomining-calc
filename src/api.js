@@ -378,4 +378,4 @@ async function getData(obj) {
     }
 }
 
-module.exports = getData
+module.exports = { getData }
