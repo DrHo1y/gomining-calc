@@ -361,9 +361,21 @@ async function getData(obj) {
     try {
         var time = Date.now()
         const usdcurs = await getUSDTRub()
+        time = Date.now() - time
+        console.log('get data / getUSDT / -- ' + time/1000)
+        time = Date.now()
         const btcCost = await getBtcPrice()
+        time = Date.now() - time
+        console.log('get data / getBtcPrice / -- ' + time/1000)
+        time = Date.now()
         const calc = caclUpgrade(obj, usdcurs)
+        time = Date.now() - time
+        console.log('get data / caclUpgrade / -- ' + time/1000)
+        time = Date.now()
         const reward = await calcReward(obj, usdcurs)
+        time = Date.now() - time
+        console.log('get data / calcReward / -- ' + time/1000)
+        time = Date.now()
         time = Date.now() - time
         console.log('get data -- ' + time/1000)
         return {
