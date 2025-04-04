@@ -215,17 +215,22 @@ function caclUpgrade(obj, usdcurs) {
     const power = setPowerCost()
     const effect = setEffectPrice()
     const res = []
+    console.log(obj)
+    console.log(power)
     for (let i = 0; i < obj.length; i++) {
         var fullcost = 0
         power.forEach(elem => {
-            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow && obj[i].pow < obj[i].newPow) {
+            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow) { // && obj[i].pow < obj[i].newPow
                 fullcost += (elem.end - obj[i].pow) * elem.cost
+                console.log(11)
             }
-            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow && obj[i].pow < obj[i].newPow) {
+            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow) { // && obj[i].pow < obj[i].newPow
                 fullcost += (elem.end - elem.start + 1) * elem.cost
+                console.log(22)
             }
-            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow && obj[i].pow < obj[i].newPow) {
+            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow) { //  && obj[i].pow < obj[i].newPow
                 fullcost += (obj[i].newPow - elem.start + 1) * elem.cost
+                console.log(33)
             }
         })
         effect.forEach(elem => {
@@ -234,6 +239,7 @@ function caclUpgrade(obj, usdcurs) {
             }
         })
         fullcost = round(fullcost * usdcurs)
+        console.log(fullcost)
         res.push({
             currPow: obj[i].pow,
             newPow: obj[i].newPow,
@@ -329,7 +335,7 @@ async function calcReward(obj, usdcurs) {
 }
 async function getData(obj) {
     try {
-        const usdcurs = 105 //  await getUSDTRub()
+        const usdcurs = 86.2 //await getUSDTRub()
         const btcCost = await getBtcPrice()
         const calc = caclUpgrade(obj, usdcurs)
         const reward = await calcReward(obj, usdcurs)
