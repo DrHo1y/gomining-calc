@@ -20,18 +20,36 @@ function appendChild(obj) {
     root.append(tag)
 }
 function remove() {
+    // var tagsStyleAndRemove = ['rub', 'btc', 'upgrade', 'percent1', 'percent2', 'tableReward']
+    // var tagsRemove = ['day', 'week', 'month', 'year']
+
+    // tagsStyleAndRemove.map(async el => {
+    //     console.log(el)
+    //     var obj = document.getElementById(el)
+    //     obj.style = 'display:none;'
+    //     await removeChild(el)
+    // })
+    // tagsRemove.map(el => {
+    //     removeChild(el)
+    // })
     var rub = document.getElementById('rub')
     var btc = document.getElementById('btc')
     var upgrade = document.getElementById('upgrade')
+    var percent1 = document.getElementById('percent1')
+    var percent2 = document.getElementById('percent2')
     rub.style = 'display: none;'
     btc.style = 'display: none;'
     upgrade.style = 'display: none;'
+    percent1.style = 'display:none;'
+    percent2.style = 'display:none;'
     var table = document.getElementById('tableReward')
     table.style = 'display: none;'
 
     removeChild('rub')
     removeChild('btc')
     removeChild('upgrade')
+    removeChild('percent1')
+    removeChild('percent2')
     removeChild('hour')
     removeChild('day')
     removeChild('week')
@@ -104,6 +122,8 @@ async function getData() {
     var rub = document.getElementById('rub')
     var btc = document.getElementById('btc')
     var upgrade = document.getElementById('upgrade')
+    var percent1 = document.getElementById('percent1')
+    var percent2 = document.getElementById('percent2')
     const data = []
     const elems = ['pow', 'newPow', 'eff', 'newEff', 'quan']
     var flag = true
@@ -143,6 +163,8 @@ async function getData() {
     rub.style = ''
     btc.style = ''
     upgrade.style = ''
+    percent1.style= ''
+    percent2.style= ''
     appendChild([
         'rub',
         'div',
@@ -160,6 +182,18 @@ async function getData() {
         'div',
         'card-body',
         'Стоимость апгрейда = ' + res['calc']['costUpgrade']
+    ])
+    appendChild([
+        'percent1',
+        'div',
+        'card-body',
+        'ROI, % = ' + res['roi']['percent1'] + '%'
+    ])
+    appendChild([
+        'percent2',
+        'div',
+        'card-body',
+        'ROI со скидкой, % = ' + res['roi']['percent2'] + '%'
     ])
 
     let mas = ['hour', 'day', 'week', 'month', 'year']

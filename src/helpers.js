@@ -1,6 +1,9 @@
 function round(num) {
     return +num.toFixed(2)
 }
+function roundLong(num) {
+    return +num.toFixed(8)
+}
 function format(num) {
     var frmt = new Intl.NumberFormat("ru-RU", {
         style: "currency",
@@ -15,4 +18,9 @@ function toNum(str) {
     return Number(res)
 }
 
-module.exports = { round, format, toNum }
+function strToNum(str) 
+{
+    return Number(str.replaceAll(/\s/g, '').replace('₽', '').replace(',', '.'))
+}
+
+module.exports = { round, format, toNum, strToNum, roundLong }

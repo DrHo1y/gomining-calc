@@ -1,7 +1,7 @@
 const axios = require('axios')
 const jsdom = require('jsdom')
 const NodeCache = require('node-cache')
-const { round, format, toNum } = require('./helpers')
+const { round, format, toNum, strToNum, roundLong } = require('./helpers')
 const cache = new NodeCache()
 
 function setEffectPrice() {
@@ -212,6 +212,19 @@ async function getThReward(pow, eff, cost, usdcurs, num, quan) {
         return null
     }
 }
+
+function getThReward2() {
+    // res = 3.125 * (86400 / (113757508810854 * (Math.pow(2,32) / (150 * 1000000000000))))
+    const data = [
+        {
+            Hourly: {
+                rewardBTC: '',
+
+            }
+        }
+    ]
+}
+
 function caclUpgrade(obj, usdcurs) {
     const power = setPowerCost()
     const effect = setEffectPrice()
@@ -294,6 +307,7 @@ async function calcReward(obj, usdcurs) {
             res[objmas[i]]['profitDisc'] = reward2[i]['reward'] - reward2[i]['service']
         }
         resMas.push(res)
+        
     }
 
     const sum = {
@@ -334,10 +348,19 @@ async function getData(obj) {
         const btcCost = await getBtcPrice()
         const calc = caclUpgrade(obj, usdcurs)
         const reward = await calcReward(obj, usdcurs)
+        var cost = strToNum(calc['costUpgrade'])
+        var percent1 = strToNum(reward['year']['profit'])
+        var percent2 = strToNum(reward['year']['profitDisc'])
+        percent1 = round(percent1 / cost * 100)
+        percent2 = round(percent2 / cost * 100)
         return {
             rubusd: format(usdcurs),
             BTCprice: format(toNum(btcCost) * usdcurs),
             calc,
+            roi: {
+                percent1,
+                percent2
+            },
             reward
         }
     } catch (e) {
