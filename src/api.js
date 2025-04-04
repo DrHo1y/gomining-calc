@@ -37,25 +37,26 @@ function setPowerCost() {
     var powers = 19
     var inx = 0
     var cost = [
-        24.34,
-        24.25,
-        24.17,
-        24.09,
-        24.01,
-        23.93,
-        23.86,
-        23.78,
-        23.70,
-        23.62,
-        23.55,
-        23.47,
-        23.40,
-        23.33,
-        23.25,
-        23.18,
-        23.11,
-        23.04,
-        22.97
+        21.26,
+        21.07,
+        20.89,
+        20.71,
+        20.53,
+        20.35,
+        20.35,
+        20.18,
+        20.00,
+        19.83,
+        19.66,
+        19.49,
+        19.32,
+        19.15,
+        18.99,
+        18.82,
+        18.66,
+        18.50,
+        18.34,
+        18.18
     ]
     var pow = [
         0,
@@ -215,22 +216,17 @@ function caclUpgrade(obj, usdcurs) {
     const power = setPowerCost()
     const effect = setEffectPrice()
     const res = []
-    console.log(obj)
-    console.log(power)
     for (let i = 0; i < obj.length; i++) {
         var fullcost = 0
         power.forEach(elem => {
-            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow) { // && obj[i].pow < obj[i].newPow
+            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow) { 
                 fullcost += (elem.end - obj[i].pow) * elem.cost
-                console.log(11)
             }
-            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow) { // && obj[i].pow < obj[i].newPow
+            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow) { 
                 fullcost += (elem.end - elem.start + 1) * elem.cost
-                console.log(22)
             }
-            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow) { //  && obj[i].pow < obj[i].newPow
+            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow) { 
                 fullcost += (obj[i].newPow - elem.start + 1) * elem.cost
-                console.log(33)
             }
         })
         effect.forEach(elem => {
@@ -239,7 +235,6 @@ function caclUpgrade(obj, usdcurs) {
             }
         })
         fullcost = round(fullcost * usdcurs)
-        console.log(fullcost)
         res.push({
             currPow: obj[i].pow,
             newPow: obj[i].newPow,
