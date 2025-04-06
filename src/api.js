@@ -92,24 +92,6 @@ function setPowerCost() {
     }
     return powerCost
 }
-async function getBtcPrice() {
-    try {
-        const btc = await axios({
-            method: 'get',
-            url: 'https://www.coinwarz.com/mining/bitcoin/calculator',
-            headers: {
-                Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                'Priority': 'u=0,i'
-            }
-        })
-        const dom1 = new jsdom.JSDOM(btc.data)
-        const btcCost = dom1.window.document.querySelector('#coin-menu > div > div.asset-container > div.col2 > div > div.asset-price > span.price-amt').textContent.trim().replace('$', '')
-        return Number(btcCost.replace(',', ''))
-    } catch (e) {
-        return null
-    }
-}
 async function getUSDTRub() {
     try {
         if (cache.has('usdt-cost')) {
@@ -137,7 +119,7 @@ async function getUSDTRub() {
         return 105
     }
 }
-async function getDifficulty() {
+async function getDifficultyAndBTCprice() {
     try {
         const result = await axios({
             method: 'get',
@@ -151,9 +133,11 @@ async function getDifficulty() {
             }
         })
         const dom = new jsdom.JSDOM(result.data)
-        const table = dom.window.document.querySelector('body > div.container > main > section:nth-child(4) > div > div > div > small')
-        const difficulty = Number(table.textContent.replaceAll(',', '').replace(/[()]/g, ''))
-        return difficulty
+        const dif = dom.window.document.querySelector('body > div.container > main > section:nth-child(4) > div > div > div > small');
+        const btc = dom.window.document.querySelector('body > #coin-menu > div > div.asset-container > div.col2 > div > div.asset-price > span.price-amt');
+        const difficulty = Number(dif.textContent.replaceAll(',', '').replace(/[()]/g, ''))
+        const btcCost = Number(btc.textContent.replaceAll('$', '').replace(',', ''))
+        return { difficulty, btcCost }
     } catch (e) {
         console.log(e)
     }
@@ -321,11 +305,16 @@ async function calcReward(obj, usdcurs, btcCost, difficulty) {
 async function getData(obj) {
     try {
         var time = Date.now()
+        var time1 = Date.now()
         const usdcurs = await getUSDTRub()
-        var btcCost = await getBtcPrice()
-        const difficulty =  await getDifficulty()
+        time1 = (Date.now() - time1) / 1000
+        console.log('getUSDTRub() = ' + time1 + 's' + ' USDT cost = ' + round(usdcurs) + '₽')
+        time1 = Date.now()
+        var { difficulty, btcCost } = await getDifficultyAndBTCprice()
 
-        console.log(`BTC - ${btcCost} $\nUSDT - ${round(usdcurs)} руб.\nDifficulty - ${difficulty}`)
+        time1 = (Date.now() - time1) / 1000
+        console.log(`getDifficultyAndBTCprice() = ${time1}s BTC cost = ${btcCost}\n Difficulty = ${difficulty}`)
+        
 
         const calc = caclUpgrade(obj, usdcurs)
         const reward = await calcReward(obj, usdcurs, btcCost, difficulty)
@@ -344,7 +333,7 @@ async function getData(obj) {
                 percent1,
                 percent2
             },
-            service : format(strToNum(reward['day']['service']) * 378),
+            service : format(strToNum(reward['day']['serviceDisc']) * 378),
             reward
         }
     } catch (e) {
