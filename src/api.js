@@ -94,10 +94,6 @@ function setPowerCost() {
 }
 async function getBtcPrice() {
     try {
-        if (cache.has('btc-cost')) {
-            const cacheData = cache.get(`btc-cost`)
-            return cacheData
-        }
         const btc = await axios({
             method: 'get',
             url: 'https://www.coinwarz.com/mining/bitcoin/calculator',
@@ -109,8 +105,7 @@ async function getBtcPrice() {
         })
         const dom1 = new jsdom.JSDOM(btc.data)
         const btcCost = dom1.window.document.querySelector('#coin-menu > div > div.asset-container > div.col2 > div > div.asset-price > span.price-amt').textContent.trim().replace('$', '')
-        cache.set('btc-cost', btcCost, 120)
-        return btcCost
+        return Number(btcCost.replace(',', ''))
     } catch (e) {
         return null
     }
@@ -142,89 +137,70 @@ async function getUSDTRub() {
         return 105
     }
 }
-
-
-
-async function getThReward(pow, eff, cost, usdcurs, num, quan) {
+async function getDifficulty() {
     try {
-        if (cache.has(`req-${num}`)) {
-            const cacheData = cache.get(`req-${num}`)
-            if (cacheData.pow == pow && cacheData.eff == eff && cacheData.quan == quan) {
-                return cacheData.payload
-            }
-        }
-
-        const btcCost = await getBtcPrice()
-
         const result = await axios({
             method: 'get',
-            url: 'https://www.coinwarz.com/mining/bitcoin/calculator',
+            url: 'https://www.coinwarz.com/mining/bitcoin/difficulty-chart',
             headers: {
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'Priority': 'u=0,i'
             },
             params: {
-                h: pow,
-                p: pow * eff,
-                pc: cost,
-                pf: 0.00,
-                d: 110451907374650.00000000,
-                r: 3.12500000,
-                er: 1,
-                btcer: btcCost,
-                ha: 'TH',
-                hc: 13699.00,
-                hs: 0,
-                hq: 0
             }
         })
-        
         const dom = new jsdom.JSDOM(result.data)
-        const table = dom.window.document.querySelector('body > div.container > main > section > section:nth-child(10) > div > table')
-        const value = table.textContent.trim().replace(/\s+/g, ' ')
-        const valueArr = value.split(' ')
-        const arr = []
-        for (let i = 0; i < valueArr.length; i++) {
-            if (valueArr[i] == 'Hourly' || valueArr[i] == 'Daily' || valueArr[i] == 'Weekly' || valueArr[i] == 'Monthly' || valueArr[i] == 'Annually') {
-                arr.push({
-                    rewardBTC: toNum(valueArr[i + 1].replace('$', '')) * quan,
-                    reward: toNum(valueArr[i + 2].replace('$', '')) * usdcurs * quan,
-                    service: toNum(valueArr[i + 3].replace('$', '')) * usdcurs * quan,
-                    //poolFees: toNum(valueArr[i+4].replace('$', '')) * usdcurs,
-                    profit: toNum(valueArr[i + 5].replace('$', '')) * usdcurs * quan
-                })
-            }
-        }
-
-        const data = {
-            pow,
-            eff,
-            quan,
-            cost,
-            usdcurs,
-            payload: arr
-        }
-        cache.set(`req-${num}`, data, 120)
-        return arr
+        const table = dom.window.document.querySelector('body > div.container > main > section:nth-child(4) > div > div > div > small')
+        const difficulty = Number(table.textContent.replaceAll(',', '').replace(/[()]/g, ''))
+        return difficulty
     } catch (e) {
         console.log(e)
-        return null
     }
 }
-
-function getThReward2() {
-    // res = 3.125 * (86400 / (113757508810854 * (Math.pow(2,32) / (150 * 1000000000000))))
-    const data = [
-        {
-            Hourly: {
-                rewardBTC: '',
-
+function getThReward(pow, eff, cost, usdcurs, difficulty, quan, btcUsdt) {
+    try {
+        function calculate(h, pow, eff, cost, usdcurs, quan, btcCost, difficulty) {
+            const rewardBTC = roundLong(3.125 * ((60*60*h) /(difficulty * (Math.pow(2, 32) / (pow * Math.pow(10, 12))))) * quan)
+            const reward = round(rewardBTC * btcCost * usdcurs)
+            const service = round((pow * eff * h / 1000)  * cost * quan * usdcurs)
+            const profit = reward - service
+            
+            return {
+                rewardBTC,
+                reward,
+                service,
+                profit
             }
+        } 
+        const masHours = [
+            1,
+            24,
+            24 * 7,
+            24 * 365 / 12,
+            24 * 365
+        ]
+        const res = []
+        for (let i = 0; i < 5; i++) {
+            res.push(
+                calculate(
+                    masHours[i],
+                    pow,
+                    eff,
+                    cost, 
+                    usdcurs,
+                    quan,
+                    btcUsdt,
+                    difficulty
+                )
+            )
         }
-    ]
-}
+        return res
+    } catch (e) {
+        console.log(e)
+    }
 
+}
 function caclUpgrade(obj, usdcurs) {
     const power = setPowerCost()
     const effect = setEffectPrice()
@@ -232,13 +208,13 @@ function caclUpgrade(obj, usdcurs) {
     for (let i = 0; i < obj.length; i++) {
         var fullcost = 0
         power.forEach(elem => {
-            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow) { 
+            if (elem.start <= obj[i].pow && elem.end >= obj[i].pow) {
                 fullcost += (elem.end - obj[i].pow) * elem.cost
             }
-            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow) { 
+            if (elem.start <= obj[i].newPow && elem.end <= obj[i].newPow && elem.start > obj[i].pow) {
                 fullcost += (elem.end - elem.start + 1) * elem.cost
             }
-            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow) { 
+            if (elem.start <= obj[i].newPow && elem.end > obj[i].newPow) {
                 fullcost += (obj[i].newPow - elem.start + 1) * elem.cost
             }
         })
@@ -265,11 +241,11 @@ function caclUpgrade(obj, usdcurs) {
     }
 
     for (let i = 0; i < res.length; i++) {
-        for(el in sum) {
+        for (el in sum) {
             sum[el] += res[i][el]
         }
     }
-    for(el in sum) {
+    for (el in sum) {
         if (el == 'costUpgrade') {
             sum['costUpgrade'] = format(sum['costUpgrade'])
         } else {
@@ -278,14 +254,14 @@ function caclUpgrade(obj, usdcurs) {
     }
     return sum
 }
-async function calcReward(obj, usdcurs) {
+async function calcReward(obj, usdcurs, btcCost, difficulty) {
     var costKiloWattHours = 31.87 / (1024 * 20 * 24) * 1000
     var costKiloWattHoursDisc = 25.13 / (1024 * 20 * 24) * 1000
     const objmas = ['hour', 'day', 'week', 'month', 'year']
     const resMas = []
     for (let i = 0; i < obj.length; i++) {
-        const reward1 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHours, usdcurs, 1, obj[i].quan)
-        const reward2 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHoursDisc, usdcurs, 2, obj[i].quan)
+        const reward1 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHours, usdcurs, difficulty, obj[i].quan, btcCost)
+        const reward2 = await getThReward(obj[i].newPow, obj[i].newEff, costKiloWattHoursDisc, usdcurs, difficulty, obj[i].quan, btcCost)
         const res = {
             hour: {},
             day: {},
@@ -307,7 +283,7 @@ async function calcReward(obj, usdcurs) {
             res[objmas[i]]['profitDisc'] = reward2[i]['reward'] - reward2[i]['service']
         }
         resMas.push(res)
-        
+
     }
 
     const sum = {
@@ -318,21 +294,21 @@ async function calcReward(obj, usdcurs) {
         year: {}
     }
     for (let i = 0; i < resMas.length; i++) {
-        for(let j = 0; j < objmas.length; j++) {
+        for (let j = 0; j < objmas.length; j++) {
             for (elem in resMas[i][objmas[j]]) {
                 sum[objmas[j]][elem] = 0
             }
         }
     }
     for (let i = 0; i < resMas.length; i++) {
-        for(let j = 0; j < objmas.length; j++) {
+        for (let j = 0; j < objmas.length; j++) {
             for (elem in resMas[i][objmas[j]]) {
                 sum[objmas[j]][elem] += resMas[i][objmas[j]][elem]
             }
         }
     }
     for (let i = 0; i < objmas.length; i++) {
-        for(elem in sum[objmas[i]]) {
+        for (elem in sum[objmas[i]]) {
             if (elem == "rewardBTC") {
                 sum[objmas[i]][elem] = String(sum[objmas[i]][elem])
             } else {
@@ -344,23 +320,31 @@ async function calcReward(obj, usdcurs) {
 }
 async function getData(obj) {
     try {
-        const usdcurs = 86.2 //await getUSDTRub()
-        const btcCost = await getBtcPrice()
+        var time = Date.now()
+        const usdcurs = await getUSDTRub()
+        var btcCost = await getBtcPrice()
+        const difficulty =  await getDifficulty()
+
+        console.log(`BTC - ${btcCost} $\nUSDT - ${round(usdcurs)} руб.\nDifficulty - ${difficulty}`)
+
         const calc = caclUpgrade(obj, usdcurs)
-        const reward = await calcReward(obj, usdcurs)
+        const reward = await calcReward(obj, usdcurs, btcCost, difficulty)
         var cost = strToNum(calc['costUpgrade'])
         var percent1 = strToNum(reward['year']['profit'])
         var percent2 = strToNum(reward['year']['profitDisc'])
         percent1 = round(percent1 / cost * 100)
         percent2 = round(percent2 / cost * 100)
+        time = (Date.now() - time) / 1000
+        console.log(`Calculate time - ${time}s.`)
         return {
             rubusd: format(usdcurs),
-            BTCprice: format(toNum(btcCost) * usdcurs),
+            BTCprice: format(btcCost * usdcurs),
             calc,
             roi: {
                 percent1,
                 percent2
             },
+            service : format(strToNum(reward['day']['service']) * 378),
             reward
         }
     } catch (e) {

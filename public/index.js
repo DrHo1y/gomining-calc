@@ -37,11 +37,13 @@ function remove() {
     var upgrade = document.getElementById('upgrade')
     var percent1 = document.getElementById('percent1')
     var percent2 = document.getElementById('percent2')
+    var service = document.getElementById('service')
     rub.style = 'display: none;'
     btc.style = 'display: none;'
     upgrade.style = 'display: none;'
     percent1.style = 'display:none;'
     percent2.style = 'display:none;'
+    service.style = 'display:none;'
     var table = document.getElementById('tableReward')
     table.style = 'display: none;'
 
@@ -50,6 +52,7 @@ function remove() {
     removeChild('upgrade')
     removeChild('percent1')
     removeChild('percent2')
+    removeChild('service')
     removeChild('hour')
     removeChild('day')
     removeChild('week')
@@ -124,6 +127,7 @@ async function getData() {
     var upgrade = document.getElementById('upgrade')
     var percent1 = document.getElementById('percent1')
     var percent2 = document.getElementById('percent2')
+    var service = document.getElementById('service')
     const data = []
     const elems = ['pow', 'newPow', 'eff', 'newEff', 'quan']
     var flag = true
@@ -165,6 +169,7 @@ async function getData() {
     upgrade.style = ''
     percent1.style= ''
     percent2.style= ''
+    service.style = ''
     appendChild([
         'rub',
         'div',
@@ -194,6 +199,12 @@ async function getData() {
         'div',
         'card-body',
         'ROI со скидкой, % = ' + res['roi']['percent2'] + '%'
+    ])
+    appendChild([
+        'service',
+        'div',
+        'card-body',
+        'Необходимо токенов на сумму = ' + res['service']
     ])
 
     let mas = ['hour', 'day', 'week', 'month', 'year']
